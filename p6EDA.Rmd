@@ -1,0 +1,512 @@
+Explore And Summarize Data For Red Win By Faisal ALsaeed
+========================================================
+
+ 
+```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
+# Load all of the packages that you end up using in your analysis in this code
+# chunk.
+
+# Notice that the parameter "echo" was set to FALSE for this code chunk. This
+# prevents the code from displaying in the knitted HTML output. You should set
+# echo=FALSE for all code chunks in your file, unless it makes sense for your
+# report to show the code that generated a particular plot.
+
+# The other parameters for "message" and "warning" should also be set to FALSE
+# for other code chunks once you have verified that each plot comes out as you
+# want it to. This will clean up the flow of your report.
+
+library(Hmisc)
+library(ggplot2)
+library(GGally)
+library(gridExtra)
+library(PerformanceAnalytics)
+library(corrplot)
+library(gplots) 
+
+outlierKD <- function(dt, var, response) {
+   var_name <- eval(substitute(var),eval(dt))
+   na1 <- sum(is.na(var_name))
+   m1 <- mean(var_name, na.rm = T)
+   par(mfrow=c(2, 2), oma=c(0,0,3,0))
+   boxplot(var_name, main="With outliers")
+   hist(var_name, main="With outliers", xlab=NA, ylab=NA)
+   outlier <- boxplot.stats(var_name)$out
+   mo <- mean(outlier)
+   var_name <- ifelse(var_name %in% outlier, NA, var_name)
+   boxplot(var_name, main="Without outliers")
+   hist(var_name, main="Without outliers", xlab=NA, ylab=NA)
+   title("Outlier Check", outer=TRUE)
+   na2 <- sum(is.na(var_name))
+   cat("Outliers identified:", na2 - na1, "n")
+   cat("Propotion (%) of outliers:", round((na2 - na1) /
+                      sum(!is.na(var_name))*100, 1), "n")
+   cat("Mean of the outliers:", round(mo, 2), "n")
+   m2 <- mean(var_name, na.rm = T)
+   cat("Mean without removing outliers:", round(m1, 2), "n")
+   cat("Mean if we remove outliers:", round(m2, 2), "n")
+   
+ if(response == "y" | response == "yes"){
+   dt[as.character(substitute(var))] <- invisible(var_name)
+         assign(as.character(as.list(match.call())$dt), 
+                 dt, envir = .GlobalEnv)
+          cat("Outliers successfully removed", "n")
+          return(invisible(dt))
+     } else{
+          cat("Nothing changed", "n")
+          return(invisible(var_name))
+     }
+}
+```
+
+```{r echo=FALSE, Load_the_Data}
+# Load the Data
+win <-read.csv('wineQualityReds.csv')
+head(win)
+dim(win)
+str(win)
+
+str(win)
+win$quality.rating <- ifelse(win$quality < 3, "Bad", 
+            ifelse(win$quality < 4, "Below average", 
+            ifelse(win$quality < 6, "average",
+            ifelse(win$quality < 8, "Good","Excellent"))))
+win$quality.rating <- factor(win$quality.rating, 
+          levels=c("Excellent", "Good", "average", 
+                   "Below average", "Bad"), ordered=TRUE)
+```
+
+> The set of data contain 1599 rows and 13 variables and by looking to the dataset, I recognized the data contain multiple variables for red wine samples test, that variables look like measurement for quality of wine so by searching on the internet about those variable I came up with this information:<br/>
+<b>x:</b> Is serial number for samples of test clearly there is no relation between this number and test samples aspects.<br/>
+<b>fixed.acidity:</b> Acids are major wine constituents and contribute greatly to its taste. In fact, acids impart the sourness or tartness that is a fundamental feature in wine taste is continuous variable.
+<b>volatile.acidity :</b> Is serial number for samples of test clearly there is no relation between this number and test samples aspects is continuous variable <br/>
+<b>citric.acid :</b>  is one of three primary acids found in grapes and converted by the winemaking process. Grapes naturally have 0.1 to 0.7 grams per liter of citric acid, which is about 10% of all acids is continuous variable. <br/>
+
+<b> We need to check and explore the data using the plot to check if needs to wrangling and clean.</b>
+
+```{r}
+sapply(win, function(x) sum(is.na(x)))
+```
+> **we use sapply function to check if there is any missing data in our data set ... so we find there is no missing data.**<br/><br/>
+
+
+# Univariate Plots Section
+##Univariate Plots Section {.tabset}
+**I find this cool function that help me to explore data with out outliers and then remove it so I am gona to check each variable to check outlier and then remove it.**
+
+### fixed.acidity
+
+```{r}
+outlierKD(win, fixed.acidity, "yes")
+summary(win$fixed.acidity)
+```
+by looking to histogram we recognize there is skewed to right with long tail the median that we got it here is  7.90 and by searching in the internet to find what is best range for acidaty for win is between 7.10 g/dm^3 and 9.20 g/dm^3 so we remove outlieres to get accuret result. 
+
+### volatile.acidity
+
+```{r}
+outlierKD(win, volatile.acidity, 'yes')
+summary(win$volatile.acidity)
+
+```
+by looking to distribution is sekewed right with some of outliers in the left the mean here is 0.5200 and we need remove those outliers.
+
+### citric.acid
+
+
+```{r}
+outlierKD(win, citric.acid, 'yes')
+summary(win$citric.acid)
+
+```
+the graph is a uniform distribution and is right sekewed but mostly right skewed there is outliers need to remove it.
+
+### residual.sugar
+
+
+```{r}
+outlierKD(win, residual.sugar, 'yes')
+summary(win$residual.sugar)
+
+```
+The graph shows the  right skewed distribution with a long tail there is many outliers need to remove.
+
+### chlorides
+
+
+```{r}
+outlierKD(win, chlorides, 'yes')
+summary(win$chlorides)
+
+```
+is look like normal shape but there is long tail in the right  
+
+### free.sulfur.dioxide
+
+
+```{r}
+outlierKD(win, free.sulfur.dioxide, 'yes')
+summary(win$free.sulfur.dioxide)
+
+```
+is right skewed with long tail in the right there is big space betwwn 57 and 66 so we need remov outliers.
+
+### total.sulfur.dioxide
+
+
+```{r}
+outlierKD(win, total.sulfur.dioxide, 'yes')
+summary(win$total.sulfur.dioxide)
+
+```
+The distribution of total sulfur dioxide is right skewed  there is gap between 120 and 289 so we need remove those data  
+
+
+### density
+
+
+```{r}
+outlierKD(win, density, 'yes')
+summary(win$density)
+
+```
+the shape of density is look like billshabe distribution and most values fall between 0.997 and 1000 we remove the value that not between those vales
+
+### pH
+
+
+```{r}
+outlierKD(win, pH, 'yes')
+summary(win$pH)
+
+```
+The histogram shape is billshape there i recognize there is outliers in this shape and need to remove
+
+### sulphates
+
+
+```{r}
+outlierKD(win, sulphates, 'yes')
+summary(win$sulphates)
+
+```
+the shape is skewed reight with long tail most values fall between 0.3 and 1.0 so the rest of values are outliers 
+
+### alcohol
+
+
+```{r}
+outlierKD(win, alcohol, 'yes')
+summary(win$alcohol)
+
+```
+the distribution is right skewed.
+
+
+# Univariate Analysis
+
+> **Tip**: Now that you've completed your univariate explorations, it's time to
+reflect on and summarize what you've found. Use the questions below to help you
+gather your observations and add your own if you have other thoughts!
+
+### What is the structure of your dataset?
+
+The dataset contains 1599 rows and 12 main variables for red wine samples the variable seems like measurement or reading combination wine test for a most frequent of wine.
+
+### What is/are the main feature(s) of interest in your dataset?
+
+Qulity varible is most interst feater in this analyses and we want to know if the chemical have effect on qulity or not.
+
+### What other features in the dataset do you think will help support your \
+investigation into your feature(s) of interest?
+by investigating and searching, i find fixed acidity, volatile.acidity, citric.acid, alcohol has a strong relation to quality of wine.
+### Did you create any new variables from existing variables in the dataset?
+
+No.
+
+### Of the features you investigated, were there any unusual distributions? \
+Did you perform any operations on the data to tidy, adjust, or change the form \
+of the data? If so, why did you do this?
+
+Yes i did some of change by explore the data to find if tere is any outliers that may have any efficet on the result so i just remove outliers.
+
+# Bivariate Plots Section
+
+
+> we need used visulization of correleation matrix between variables that can tell us which is have better reletion between variables and qulity then we explore more about those variables.
+
+##Bivariate Plots Section {.tabset}
+
+
+### pairs matrix
+
+```{r}
+library(corrplot)
+
+cor(win[c(2:13)], use = "complete.obs") 
+chart.Correlation(win[, c(2:13)], histogram=TRUE, pch=19)
+```
+I use this explor tools to check correletion and check the releation between variables I use corrplot function we need check which is have begist postive and smallest reletion cofficient between qulity and other variables so by looking to corplot we find  alchol vs quality is 0.48, sulphates vs quality is 0.25 ,citric.acid vs quality = 0.23 , fixed.acidity vs quality is 0.12 there is also reletion between variables with each other like fixed.acidity vs density is 0.67 and citric.acid vs pH = -0.54 and fixed.acidity vs pH = -0.68
+
+### Heatmap matrix
+
+```{r}
+bi_data <- win[, c(2:13)] 
+data1 <- as.matrix(bi_data) 
+col<-  colorRampPalette(c("blue", "red"))(100)
+heatmap(data1, col = col)
+
+```
+I try here to use heatmap to find easly and be sure which is the bigest positive cofficent so I get not clear matrix couse margins too large.
+
+### alchol vs quality is 0.48
+
+```{r}
+qplot(quality , alcohol ,  data = win, 
+      color = factor(win$quality.rating),
+      geom=c("boxplot", "smooth"))+ 
+  geom_jitter( alpha = 1/10, color="black") +
+      geom_line(aes(group = 1),
+                  stat = "summary",
+                  fun.y = median,
+                  color = "#E74C3C",
+                  size = 1,
+                  alpha = 0.8)+
+     stat_summary(fun.y = "median", 
+               geom = "point", 
+               color = "red", 
+               shape = 8, 
+               size = 4)+
+    ggtitle("Alcohol Vs Quality Of Wine")+
+   xlab("Quality") + ylab("Alcohol [% for volume]")
+     
+ 
+cor.test(win$quality,win$alcohol,method = 'pearson')
+
+ by(win$alcohol, win$quality, median)
+```
+
+
+ by looking to graph we can say boxplot of execelent is have higher alcohol so when alcohol is increse the qulity as well increse
+
+### citric.acid vs pH
+
+
+```{r}
+ggplot(aes(x=citric.acid,y=pH), data = win)+
+      geom_point(alpha = 0.3) +
+      geom_smooth(colour='blue',method = "lm", se = FALSE
+                  ,size=1)
+cor.test(win$citric.acid,win$pH,method = 'pearson')
+
+```
+
+### fixed.acidity vs density
+
+
+```{r}
+ggplot(aes(x=fixed.acidity,y=density), data = win)+
+      geom_point(alpha = 0.3) +
+      geom_smooth(colour='blue',method = "lm", se = FALSE
+                  ,size=1)
+cor.test(win$fixed.acidity,win$density,method = 'pearson')
+
+```
+
+by looking to scatter plot we see there is reletion between density and pH the trends goes up thats mean density is increse and fixed.acidity also is increse 
+
+### citric.acid vs pH
+
+
+```{r}
+ggplot(aes(x=citric.acid,y=pH), data = win)+
+      geom_point(alpha = 0.3) +
+      geom_smooth(colour='blue',method = "lm", se = FALSE
+                  ,size=1)
+cor.test(win$citric.acid,win$pH,method = 'pearson')
+
+```
+by looking to scatter plot we see there is reletion between citric.acid and pH the trends goes down thats mean citric.acid is increse while pH  is decrese 
+
+### fixed.acidity vs pH
+
+
+```{r}
+ggplot(aes(x=fixed.acidity,y=pH), data = win)+
+      geom_point(alpha = 0.3) +
+      geom_smooth(colour='blue',method = "lm", se = FALSE
+                  ,size=1)
+cor.test(win$fixed.acidity,win$pH,method = 'pearson')
+
+```
+ by looking to scatter plot we see there is reletion between fixed.acidity and pH the trends goes up thats mean fixed.acidity is increasing while pH  is decresing 
+
+# Bivariate Analysis
+ 
+
+### Talk about some of the relationships you observed in this part of the \
+investigation. How did the feature(s) of interest vary with other features in \
+the dataset?
+I use this explor tools like as pairs matrix and heatmap to check correletion and check the releation between variables I use corrplot function becouse we need check which is have begist postive and smallest reletion cofficient between qulity and other variables so by looking to corplot we find  alchol vs quality is 0.48, sulphates vs quality is 0.25 ,citric.acid vs quality = 0.23 , fixed.acidity vs quality is 0.12 there is also reletion between variables with each other like fixed.acidity vs density is 0.67 and citric.acid vs pH = -0.54 and fixed.acidity vs pH = -0.68
+### Did you observe any interesting relationships between the other features \
+(not the main feature(s) of interest)?
+yes
+### What was the strongest relationship you found?
+
+it was between alcohol and quality it was have  0.48 
+
+ 
+##Multivariate Plots Section {.tabset}
+ 
+
+### quality, fixed.acidity vs. density
+
+```{r}
+ggplot(data=win, aes(x=fixed.acidity, y=density ,
+                     color=win$quality.rating))+
+  geom_point()+ geom_smooth(method='lm', se=FALSE)
+```
+
+by looking to scatterplot we can see there is reletion we can describe this as highe positive correlation between fixed.acidity and density
+
+### quality, citric.acid vs. pH
+
+
+```{r}
+ggplot(data=win, aes(x=citric.acid, y=pH , 
+                     color=win$quality.rating))+
+  geom_point()+ geom_smooth(method='lm', se=FALSE)
+
+```
+
+by looking to scatterplot we can see there is reletion we can describe this as high negative correlation between citric.acid and pH there is outlier 
+
+### quality, citric.acid vs. volatile.acidity
+
+
+```{r}
+ggplot(data=win, aes(x=citric.acid, y=volatile.acidity , color=win$quality.rating))+
+  geom_point()+ geom_smooth(method='lm', se=FALSE)
+
+```
+
+by looking to scatterplot we can see there is reletion we can describe this as high negative correlation between citric.acid and volatile.acidity there is some ouliers values 
+
+### quality, chlorides vs. density
+
+
+```{r}
+ggplot(data=win, aes(x=chlorides, y=density , 
+                     color=win$quality.rating))+
+  geom_point()+ geom_smooth(method='lm', se=FALSE) 
+```
+
+it is seem not correlated among the variables also the trend of win qulity is vary 
+ 
+ 
+### quality, fixed.acidity vs. citric.acid
+  
+
+```{r}
+ggplot(data=win, aes(x=fixed.acidity, y=density , 
+                     color=win$quality.rating))+
+  geom_point()+ geom_smooth(method='lm', se=FALSE) 
+```
+
+ by looking to scatterplot we can see there is reletion we can describe this as high positive correlation between fixed.acidity and density there is some ouliers values 
+ 
+ 
+### quality, residual sugar vs. free sulphur dioxide
+
+
+```{r}
+ggplot(data=win, aes(x=residual.sugar
+      , y=free.sulfur.dioxide , color=win$quality.rating))+
+        geom_point()+ geom_smooth(method='lm', se=FALSE) 
+```
+  
+there is no corrlateion between variables also the trind of qulity is varying
+
+# Multivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the \
+investigation. Were there features that strengthened each other in terms of \
+looking at your feature(s) of interest?
+I talk about each reletion above.
+### Were there any interesting or surprising interactions between features?
+I can't see any  interisted between features
+### OPTIONAL: Did you create any models with your dataset? Discuss the \
+strengths and limitations of your model.
+
+------
+
+# Final Plots and Summary
+ 
+### Plot One
+```{r echo=FALSE, Plot_One}
+qplot(quality , alcohol ,  data = win, 
+      color = factor(win$quality.rating),
+      geom=c("boxplot", "smooth"))+ 
+  geom_jitter( alpha = 1/10, color="black") +
+      geom_line(aes(group = 1),
+                  stat = "summary",
+                  fun.y = median,
+                  color = "#E74C3C",
+                  size = 1,
+                  alpha = 0.8)+
+     stat_summary(fun.y = "median", 
+               geom = "point", 
+               color = "red", 
+               shape = 8, 
+               size = 4)+
+    ggtitle("Alcohol Vs Quality Of Wine")+
+   xlab("Quality") + ylab("Alcohol [% for volume]")
+     
+ 
+cor.test(win$quality,win$alcohol,method = 'pearson')
+
+ by(win$alcohol, win$quality, median)
+ 
+```
+
+### Description One
+
+ by looking to graph we can saythe boxplot of execelent is have higher alcohol so when alcohol is increse the qulity as well increse also the median trend of qulity is increse 
+
+### Plot Two
+```{r echo=FALSE, Plot_Two}
+ggplot(data=win, aes(x=fixed.acidity, y=density
+    , color=win$quality.rating))+ geom_point()+
+  geom_smooth(method='lm', se=FALSE)+
+  ggtitle("Quality Of Wine Over \n Fixed.acidity And Density")+
+    xlab("Fixed.acidity [g/dma^3]") + ylab("Density")
+```
+
+### Description Two
+
+by looking to scatterplot we can see there is reletion we can describe this as highe positive correlation between fixed.acidity and density
+
+### Plot Three
+```{r echo=FALSE, Plot_Three}
+ggplot(aes(x=fixed.acidity,y=density), data = win)+
+  geom_point(alpha = 1/10)+ stat_smooth(colour='blue', span=0.2)+
+  ggtitle("Reletion Between Fixed.acidity And Density")+
+   xlab("Fixed.acidity [g/dma^3]") + ylab("Density")
+```
+
+### Description Three
+
+by looking to scatter plot we see there is reletion between density and pH the trends goes up thats meen density is increse and fixed.acidity also is increse  they have strong positive corrletion.
+------
+
+# Reflection
+At the beginning of the project and when selecting the bytes through the data set list, I hesitated to choose this project since I have no chemical experience in knowing the effect of the components on each other, but because I love the challenges I decided to read more about this topic and decided to begin analyzing the data I encountered some The difficulties as knowing the details of the wine components were red but the subject was interesting.
+In this project I learned about many properties and their effect on the taste and quality of wine. I drew many conclusions and applied the lessons I learned about relationships and trends and applied many tools.
+
+
+RESOURCES
+1-http://www.sthda.com/english/wiki/correlation-matrix-a-quick-start-guide-to-analyze-format-and-visualize-a-correlation-matrix-using-r-software
+2-http://ggplot.yhathq.com/
+3-https://datascienceplus.com/identify-describe-plot-and-removing-the-outliers-from-the-dataset/
+4-https://en.wikipedia.org/wiki/Acids_in_wine
+5-https://mste.illinois.edu/courses/ci330ms/youtsey/scatterinfo.html
+6-http://www.sthda.com/english/wiki/correlation-matrix-a-quick-start-guide-to-analyze-format-and-visualize-a-correlation-matrix-using-r-software
