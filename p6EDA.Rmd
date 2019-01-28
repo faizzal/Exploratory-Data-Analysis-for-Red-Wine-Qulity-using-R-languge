@@ -66,8 +66,8 @@ dim(win)
 str(win)
 
 str(win)
-win$quality.rating <- ifelse(win$quality < 3, "Bad", 
-            ifelse(win$quality < 4, "Below average", 
+win$quality.rating <- ifelse(win$quality < 2, "Bad", 
+            ifelse(win$quality < 3, "Below average", 
             ifelse(win$quality < 6, "average",
             ifelse(win$quality < 8, "Good","Excellent"))))
 win$quality.rating <- factor(win$quality.rating, 
