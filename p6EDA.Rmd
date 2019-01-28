@@ -400,7 +400,7 @@ ggplot(data=win, aes(x=chlorides, y=density ,
                      color=win$quality.rating))+
   geom_point()+ geom_smooth(method='lm', se=FALSE) 
 ```
-
+cor.test(win$chlorides,win$density,
 it is seem not correlated among the variables also the trend of win qulity is vary 
  
  
@@ -492,6 +492,7 @@ ggplot(aes(x=fixed.acidity,y=density), data = win)+
   geom_point(alpha = 1/10)+ stat_smooth(colour='blue', span=0.2)+
   ggtitle("Reletion Between Fixed.acidity And Density")+
    xlab("Fixed.acidity [g/dma^3]") + ylab("Density")
+ by(win$fixed.acidity, win$density, median)
 ```
 
 ### Description Three
