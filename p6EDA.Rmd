@@ -323,7 +323,8 @@ ggplot(aes(x=citric.acid,y=pH), data = win)+
       geom_smooth(colour='blue',method = "lm", se = FALSE
                   ,size=1)
 cor.test(win$citric.acid,win$pH,method = 'pearson')
-
+summery(win$citric.acid)
+summery(win$pH)
 ```
 by looking to scatter plot we see there is reletion between citric.acid and pH the trends goes down thats mean citric.acid is increse while pH  is decrese 
 
